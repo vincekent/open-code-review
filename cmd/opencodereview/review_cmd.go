@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/alibaba/open-code-review/internal/agent"
+	"github.com/alibaba/open-code-review/internal/config/template"
 	"github.com/alibaba/open-code-review/internal/diff"
 	"github.com/alibaba/open-code-review/internal/llm"
 	"github.com/alibaba/open-code-review/internal/mcp"
@@ -112,6 +113,7 @@ func executeReviewContext(ctx context.Context, opts reviewOptions) error {
 	if err != nil {
 		return err
 	}
+	applyReviewMaxToolsOverride(cc.Template, opts.maxTools)
 	applyCLIExcludes(cc, splitPaths(opts.excludes))
 
 	// Security (#112): reject ref-option injection before any git invocation.
@@ -302,6 +304,12 @@ func executeReviewContext(ctx context.Context, opts reviewOptions) error {
 		return errors.Join(resultErr, emitErr)
 	}
 	return emitErr
+}
+
+func applyReviewMaxToolsOverride(tpl *template.Template, maxTools int) {
+	if maxTools > 0 {
+		tpl.MaxToolRequestTimes = maxTools
+	}
 }
 
 func reviewResultError(runErr error, manifest *session.RunManifest) error {
